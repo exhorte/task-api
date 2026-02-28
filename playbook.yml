@@ -1,0 +1,118 @@
+- name: Déploiement de task-api sur VM Ubuntu
+  hosts: vm_ubuntu
+  become: true
+  vars:
+    docker_image: "exhorte/task-api:latest"
+    container_name: "task-api-container"
+    app_port: 8085
+  tasks:
+    # ─────────────────────────────────────────
+    # ÉTAPE 1 : Préparation de la VM
+    # ─────────────────────────────────────────
+    - name: Mettre à jour les paquets apt
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Installer les dépendances nécessaires
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - python3-pip
+        state: present
+
+    - name: Vérifier si Docker est déjà installé
+      command: docker --version
+      register: docker_check
+      ignore_errors: true
+
+    - name: Installer Docker si absent
+      shell: |
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+      when: docker_check.failed
+      async: 300      #  FIX 2 : tourne en arrière-plan, ne garde pas la connexion SSH ouverte
+      poll: 15
+
+    - name: Attendre que SSH soit de nouveau disponible
+      wait_for_connection:        #  FIX 2 : attend que la VM soit de nouveau joignable
+        delay: 15
+        timeout: 120
+
+    - name: Démarrer et activer Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    # ─── FIX 1 : ajouter l'utilisateur au groupe docker ──────────────
+    - name: Ajouter l'utilisateur exhorte au groupe docker
+      user:
+        name: exhorte
+        groups: docker
+        append: yes
+    # ─────────────────────────────────────────────────────────────────
+
+    - name: Installer MySQL Server
+      apt:
+        name: mysql-server
+        state: present
+
+    - name: Démarrer et activer MySQL
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Créer la base de données taskdb
+      shell: mysql -u root -e "CREATE DATABASE IF NOT EXISTS taskdb;"
+      ignore_errors: true
+
+    # ─────────────────────────────────────────
+    # ÉTAPE 2 : Déploiement de l'application
+    # ─────────────────────────────────────────
+    - name: Pull de l'image Docker depuis Docker Hub
+      shell: docker pull {{ docker_image }}
+
+    - name: Stopper le conteneur existant si présent
+      shell: docker stop {{ container_name }}
+      ignore_errors: true
+
+    - name: Supprimer l'ancien conteneur si présent
+      shell: docker rm {{ container_name }}
+      ignore_errors: true
+
+    - name: Lancer le nouveau conteneur task-api
+      shell: >
+        docker run -d
+        --name {{ container_name }}
+        -p {{ app_port }}:{{ app_port }}
+        --restart always
+        -e SPRING_DATASOURCE_URL="jdbc:mysql://172.17.0.1:3306/taskdb?createDatabaseIfNotExist=true"
+        -e SPRING_DATASOURCE_USERNAME=root
+        -e SPRING_DATASOURCE_PASSWORD=""
+        {{ docker_image }}
+
+    # ─────────────────────────────────────────
+    # ÉTAPE 3 : Vérification automatique
+    # ─────────────────────────────────────────
+    - name: Attendre que l'application démarre (30 secondes)
+      wait_for:
+        port: "{{ app_port }}"
+        delay: 15
+        timeout: 60
+
+    - name: Vérifier que l'API répond correctement
+      uri:
+        url: "http://localhost:{{ app_port }}/api/tasks"
+        method: GET
+        status_code: 200
+      register: api_response
+
+    - name: Afficher le résultat de la vérification
+      debug:
+        msg: "API task-api opérationnelle ! Réponse : {{ api_response.status }}"
