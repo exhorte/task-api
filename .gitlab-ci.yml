@@ -6,11 +6,19 @@ stages:
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
+.install_task_core: &install_task_core
+  before_script:
+    - mvn install:install-file
+        -Dfile=libs/task-core-0.3.0.jar
+        -DpomFile=libs/task-core-0.3.0.pom
+        -Dmaven.repo.local=.m2/repository
+
 test:
   stage: test
   image: maven:3.9.4-eclipse-temurin-17
+  <<: *install_task_core
   script:
-    - mvn test
+    - mvn test -Dmaven.repo.local=.m2/repository
   cache:
     key: "$CI_COMMIT_REF_SLUG"
     paths:
@@ -19,8 +27,9 @@ test:
 build:
   stage: build
   image: maven:3.9.4-eclipse-temurin-17
+  <<: *install_task_core
   script:
-    - mvn clean package -DskipTests
+    - mvn clean package -DskipTests -Dmaven.repo.local=.m2/repository
   artifacts:
     paths:
       - target/*.jar

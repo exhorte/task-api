@@ -8,10 +8,10 @@
 		<version>4.0.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>sn.isi.l3gl.api</groupId>
-	<artifactId>task-api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>task-api</name>
+	<groupId>sn.isi.l3gl.core</groupId>
+	<artifactId>task-core</artifactId>
+	<version>0.3.0</version>
+	<name>task-core</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
@@ -34,27 +34,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webmvc</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-
-		<!-- Prometheus pour le monitoring -->
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-registry-prometheus</artifactId>
-		</dependency>
-
-		<!-- Loki pour les logs centralisés -->
-		<dependency>
-			<groupId>com.github.loki4j</groupId>
-			<artifactId>loki-logback-appender</artifactId>
-			<version>1.4.1</version>
-		</dependency>
 
 		<dependency>
 			<groupId>com.mysql</groupId>
@@ -71,55 +50,18 @@
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<!-- NOTRE MODULE task-core depuis Nexus -->
-		<dependency>
-			<groupId>sn.isi.l3gl.core</groupId>
-			<artifactId>task-core</artifactId>
-			<version>0.3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webmvc-test</artifactId>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
-	<!-- DIRE À MAVEN OÙ CHERCHER task-core -->
-	<repositories>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<url>http://localhost:8081/repository/maven-snapshots/</url>
+		</snapshotRepository>
 		<repository>
 			<id>nexus-releases</id>
-			<url>${nexus.url}/repository/maven-releases/</url>
+			<url>http://localhost:8081/repository/maven-releases/</url>
 		</repository>
-		<repository>
-			<id>nexus-snapshots</id>
-			<url>${nexus.url}/repository/maven-snapshots/</url>
-		</repository>
-	</repositories>
-
-	<profiles>
-		<profile>
-			<id>local</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<properties>
-				<nexus.url>http://localhost:8081</nexus.url>
-			</properties>
-		</profile>
-		<profile>
-			<id>ci</id>
-			<activation>
-				<property>
-					<name>env.CI</name>
-				</property>
-			</activation>
-			<properties>
-				<nexus.url>http://localhost:8081</nexus.url>
-			</properties>
-		</profile>
-	</profiles>
-
+	</distributionManagement>
 
 	<build>
 		<plugins>
@@ -139,6 +81,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<skip>true</skip>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
