@@ -46,9 +46,15 @@ docker:
     - docker:dind
   variables:
     DOCKER_TLS_CERTDIR: ""
+    DOCKER_API_IMAGE: $DOCKER_USERNAME/task-api
+    DOCKER_DB_IMAGE: $DOCKER_USERNAME/task-db
   script:
     - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    - docker build -t $DOCKER_IMAGE:latest .
-    - docker push $DOCKER_IMAGE:latest
+    # Build & Push API
+    - docker build -t $DOCKER_API_IMAGE:latest .
+    - docker push $DOCKER_API_IMAGE:latest
+    # Build & Push DB
+    - docker build -t $DOCKER_DB_IMAGE:latest ./db
+    - docker push $DOCKER_DB_IMAGE:latest
   only:
     - develop
