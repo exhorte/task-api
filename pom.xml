@@ -68,7 +68,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 
@@ -79,21 +79,16 @@
 			<version>0.3.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
-	<!-- DIRE À MAVEN OÙ CHERCHER task-core -->
 	<repositories>
 		<repository>
-			<id>nexus-releases</id>
-			<url>${nexus.url}/repository/maven-releases/</url>
-		</repository>
-		<repository>
-			<id>nexus-snapshots</id>
-			<url>${nexus.url}/repository/maven-snapshots/</url>
+			<id>central</id>
+			<url>https://repo.maven.apache.org/maven2</url>
 		</repository>
 	</repositories>
 
@@ -103,22 +98,15 @@
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
-			<properties>
-				<nexus.url>http://localhost:8081</nexus.url>
-			</properties>
-		</profile>
-		<profile>
-			<id>ci</id>
-			<activation>
-				<property>
-					<name>env.CI</name>
-				</property>
-			</activation>
-			<properties>
-				<nexus.url>http://localhost:8081</nexus.url>
-			</properties>
+			<repositories>
+				<repository>
+					<id>nexus-releases</id>
+					<url>http://localhost:8081/repository/maven-releases/</url>
+				</repository>
+			</repositories>
 		</profile>
 	</profiles>
+
 
 
 	<build>
